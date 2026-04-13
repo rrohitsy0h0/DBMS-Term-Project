@@ -1,1 +1,1 @@
-SELECT * FROM students WHERE grade='A';
+SELECT * FROM employees ORDER BY salary DESC;
