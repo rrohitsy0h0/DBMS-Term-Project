@@ -1,2 +1,2 @@
-# *.sh linguist-vendored
+backend/setup_db.sh linguist-vendored
 backend/lib/** linguist-vendored
