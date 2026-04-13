@@ -1,0 +1,18 @@
+# Frontend UI
+streamlit>=1.32.0
+
+# Database Connectors
+# SQLAlchemy provides a uniform interface for SQLite and PostgreSQL
+sqlalchemy>=2.0.28
+# Only needed if you decide to use PostgreSQL instead of the built-in SQLite
+psycopg2-binary>=2.9.9 
+
+# Open-Source LLM Integration (Text-to-SQL)
+# Standard stack for running models like Llama, Mistral, or CodeLlama locally
+transformers>=4.38.2
+torch>=2.2.1
+accelerate>=0.27.2
+
+# SQL Validation Pipeline
+# Excellent library for parsing, validating, and formatting SQL syntax
+sqlglot>=23.0.0
