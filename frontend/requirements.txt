@@ -5,7 +5,7 @@ streamlit>=1.32.0
 # SQLAlchemy provides a uniform interface for SQLite and PostgreSQL
 sqlalchemy>=2.0.28
 # Only needed if you decide to use PostgreSQL instead of the built-in SQLite
-psycopg2-binary>=2.9.9 
+# psycopg2-binary>=2.9.9 
 
 # Open-Source LLM Integration (Text-to-SQL)
 # Standard stack for running models like Llama, Mistral, or CodeLlama locally
