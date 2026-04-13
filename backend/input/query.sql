@@ -1,1 +1,1 @@
-SELECT * FROM employees ORDER BY salary DESC;
+SELECT * FROM library_books WHERE genre='AI/ML';
