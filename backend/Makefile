@@ -2,8 +2,8 @@
 
 CXX      := g++
 CC       := gcc
-CXXFLAGS := -std=c++17 -Wall -Wextra -O2
-CFLAGS   := -std=c11 -O2
+CXXFLAGS := -Wall -Wextra -O2
+CFLAGS   := -O2
 LDFLAGS  := -lpthread
 
 # C++ source files

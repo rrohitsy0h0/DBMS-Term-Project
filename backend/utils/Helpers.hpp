@@ -13,12 +13,14 @@
 
 #include "../models/Metrics.hpp"
 #include "../buffer/BufferManager.hpp"
+#include "../database/SQLiteManager.hpp"
 
 namespace Helpers {
 
     // Generate a page access sequence from a record count.
-    // Each page holds PAGE_SIZE records. We simulate sequential page access.
-    inline std::vector<int> generatePageSequence(int recordCount, int pageSize) {
+    // Each page holds PAGE_SIZE records. Pages start at basePageId
+    // so different tables have globally unique page IDs.
+    inline std::vector<int> generatePageSequence(int recordCount, int pageSize, int basePageId = 0) {
         if (recordCount <= 0 || pageSize <= 0) return {};
 
         int totalPages = static_cast<int>(std::ceil(
@@ -27,7 +29,7 @@ namespace Helpers {
         std::vector<int> sequence;
         sequence.reserve(totalPages);
         for (int i = 0; i < totalPages; ++i) {
-            sequence.push_back(i);
+            sequence.push_back(basePageId + i);
         }
         return sequence;
     }
@@ -88,6 +90,86 @@ namespace Helpers {
         }
 
         ofs << "\n========================================\n";
+        ofs.close();
+    }
+
+    // Write a single query's results to display.txt.
+    // If isFirstWrite is true, truncates the file; otherwise appends.
+    inline void appendQueryResultToFile(
+        const std::string& sql,
+        const QueryResult& result,
+        const std::string& filepath,
+        bool isFirstWrite
+    ) {
+        // Ensure output directory exists
+        std::string dir = filepath.substr(0, filepath.find_last_of('/'));
+        if (!dir.empty()) {
+            ensureDirectory(dir);
+        }
+
+        // First query → trunc (clear old file), subsequent → append
+        auto mode = std::ios::out;
+        if (isFirstWrite) {
+            mode |= std::ios::trunc;
+        } else {
+            mode |= std::ios::app;
+        }
+
+        std::ofstream ofs(filepath, mode);
+        if (!ofs.is_open()) return;
+
+        // Timestamp for this query
+        std::time_t now = std::time(nullptr);
+        std::tm* lt = std::localtime(&now);
+        char timeBuf[64];
+        std::strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%d %H:%M:%S", lt);
+
+        ofs << "========================================\n";
+        ofs << "  Query executed at: " << timeBuf << "\n";
+        ofs << "  SQL: " << sql << "\n";
+        ofs << "  Records: " << result.recordCount() << "\n";
+        ofs << "========================================\n\n";
+
+        if (result.rows.empty()) {
+            ofs << "(No results)\n\n";
+            ofs.close();
+            return;
+        }
+
+        // Calculate column widths for aligned table output
+        int numCols = static_cast<int>(result.columns.size());
+        std::vector<size_t> widths(numCols, 0);
+
+        for (int c = 0; c < numCols; ++c) {
+            widths[c] = result.columns[c].size();
+        }
+        for (const auto& row : result.rows) {
+            for (int c = 0; c < numCols && c < static_cast<int>(row.size()); ++c) {
+                widths[c] = std::max(widths[c], row[c].size());
+            }
+        }
+
+        // Print header
+        for (int c = 0; c < numCols; ++c) {
+            ofs << std::left << std::setw(static_cast<int>(widths[c]) + 2) << result.columns[c];
+        }
+        ofs << "\n";
+
+        // Print separator
+        for (int c = 0; c < numCols; ++c) {
+            ofs << std::string(widths[c], '-') << "  ";
+        }
+        ofs << "\n";
+
+        // Print rows
+        for (const auto& row : result.rows) {
+            for (int c = 0; c < numCols && c < static_cast<int>(row.size()); ++c) {
+                ofs << std::left << std::setw(static_cast<int>(widths[c]) + 2) << row[c];
+            }
+            ofs << "\n";
+        }
+
+        ofs << "\n";
         ofs.close();
     }
 

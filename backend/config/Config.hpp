@@ -14,9 +14,10 @@ namespace Config {
     constexpr int POLL_INTERVAL_MS = 500;
 
     // File paths
-    const std::string DB_PATH      = "database.db";
-    const std::string QUERY_FILE   = "input/query.sql";
-    const std::string METRICS_FILE = "output/metrics.txt";
+    const std::string DB_PATH       = "database.db";
+    const std::string QUERY_FILE    = "input/query.sql";
+    const std::string METRICS_FILE  = "output/metrics.txt";
+    const std::string DISPLAY_FILE  = "output/display.txt";
 }
 
 #endif // CONFIG_HPP

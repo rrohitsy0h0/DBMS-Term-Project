@@ -57,6 +57,10 @@ int main() {
         return 1;
     }
 
+    // Initialize page offset registry — assigns unique page ranges per table
+    Logger::info("Initializing page offset registry...");
+    dbManager.initPageOffsets(Config::PAGE_SIZE);
+
     // Create file watcher for query.sql
     FileWatcher watcher(Config::QUERY_FILE);
 
@@ -69,6 +73,9 @@ int main() {
     g_managers = {&lruBuffer, &mruBuffer, &clockBuffer, &pinnedBuffer};
 
     Logger::info("All buffer managers initialized. Watching for queries...\n");
+
+    // Flag to truncate display.txt on first query (overwrite previous run's output)
+    bool isFirstWrite = true;
 
     // ── Main loop ────────────────────────────────────────────────
     while (g_running) {
@@ -88,19 +95,31 @@ int main() {
 
             Logger::info("New query detected: " + sql);
 
-            // Execute the query and get record count
-            int recordCount = dbManager.executeQuery(sql);
+            // Execute the query and get full results
+            QueryResult result = dbManager.executeQueryWithResults(sql);
+            int recordCount = result.recordCount();
 
             if (recordCount <= 0) {
                 Logger::warn("Query returned 0 records. Skipping buffer simulation.");
                 continue;
             }
 
-            // Generate page access sequence
-            std::vector<int> pageSequence = Helpers::generatePageSequence(
-                recordCount, Config::PAGE_SIZE);
+            // Write query results to display.txt (once, not per strategy)
+            Helpers::appendQueryResultToFile(sql, result, Config::DISPLAY_FILE, isFirstWrite);
+            isFirstWrite = false;
+            Logger::info("Query results written to " + Config::DISPLAY_FILE);
 
-            Logger::info("Page sequence generated: " + std::to_string(pageSequence.size()) + " pages");
+            // Determine which table this query accesses for page offset
+            std::string tableName = SQLiteManager::extractTableName(sql);
+            int basePageId = dbManager.getBasePageId(tableName);
+
+            // Generate page access sequence with table-specific base offset
+            std::vector<int> pageSequence = Helpers::generatePageSequence(
+                recordCount, Config::PAGE_SIZE, basePageId);
+
+            Logger::info("Table: '" + tableName + "' | Base page: " + std::to_string(basePageId)
+                + " | Pages: [" + std::to_string(pageSequence.front())
+                + ".." + std::to_string(pageSequence.back()) + "]");
 
             // Feed page sequence to all buffer managers
             for (BufferManager* mgr : g_managers) {

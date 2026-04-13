@@ -1,6 +1,9 @@
 #include "SQLiteManager.hpp"
 #include "../utils/Logger.hpp"
 #include <sstream>
+#include <algorithm>
+#include <cctype>
+#include <cmath>
 
 SQLiteManager::SQLiteManager(const std::string& dbPath) : db_(nullptr), isOpen_(false) {
     int rc = sqlite3_open(dbPath.c_str(), &db_);
@@ -51,4 +54,175 @@ int SQLiteManager::executeQuery(const std::string& sql) {
 
     Logger::info("Query executed. Records accessed: " + std::to_string(recordCount));
     return recordCount;
+}
+
+QueryResult SQLiteManager::executeQueryWithResults(const std::string& sql) {
+    QueryResult result;
+
+    if (!isOpen_ || !db_) {
+        Logger::error("Database is not open.");
+        return result;
+    }
+
+    // Data passed to the callback: pointer to result + flag for first row (to capture columns)
+    struct CallbackData {
+        QueryResult* result;
+        bool columnsSet;
+    };
+
+    CallbackData cbData = {&result, false};
+    char* errMsg = nullptr;
+
+    auto callback = [](void* data, int argc, char** argv, char** colNames) -> int {
+        CallbackData* cb = static_cast<CallbackData*>(data);
+
+        // Capture column names on the first row
+        if (!cb->columnsSet) {
+            for (int i = 0; i < argc; ++i) {
+                cb->result->columns.push_back(colNames[i] ? colNames[i] : "");
+            }
+            cb->columnsSet = true;
+        }
+
+        // Capture row data
+        std::vector<std::string> row;
+        for (int i = 0; i < argc; ++i) {
+            row.push_back(argv[i] ? argv[i] : "NULL");
+        }
+        cb->result->rows.push_back(std::move(row));
+
+        return 0;
+    };
+
+    int rc = sqlite3_exec(db_, sql.c_str(), callback, &cbData, &errMsg);
+
+    if (rc != SQLITE_OK) {
+        Logger::error("SQL error: " + std::string(errMsg));
+        sqlite3_free(errMsg);
+        return result;
+    }
+
+    Logger::info("Query executed. Records accessed: " + std::to_string(result.recordCount()));
+    return result;
+}
+
+// ── Page Offset Registry ─────────────────────────────────────────
+
+void SQLiteManager::initPageOffsets(int pageSize) {
+    if (!isOpen_ || !db_) return;
+
+    tablePageOffsets_.clear();
+
+    // Step 1: Get all table names from sqlite_master
+    std::vector<std::string> tableNames;
+    char* errMsg = nullptr;
+
+    auto tableCallback = [](void* data, int argc, char** argv, char** /*colNames*/) -> int {
+        auto* names = static_cast<std::vector<std::string>*>(data);
+        if (argc > 0 && argv[0]) {
+            names->push_back(argv[0]);
+        }
+        return 0;
+    };
+
+    int rc = sqlite3_exec(db_,
+        "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;",
+        tableCallback, &tableNames, &errMsg);
+
+    if (rc != SQLITE_OK) {
+        Logger::error("Failed to read tables: " + std::string(errMsg));
+        sqlite3_free(errMsg);
+        return;
+    }
+
+    // Step 2: For each table, count rows and assign contiguous page ranges
+    int nextPageId = 0;
+
+    for (const auto& table : tableNames) {
+        int rowCount = 0;
+
+        auto countCallback = [](void* data, int argc, char** argv, char** /*colNames*/) -> int {
+            if (argc > 0 && argv[0]) {
+                *static_cast<int*>(data) = std::atoi(argv[0]);
+            }
+            return 0;
+        };
+
+        std::string countSql = "SELECT COUNT(*) FROM " + table + ";";
+        rc = sqlite3_exec(db_, countSql.c_str(), countCallback, &rowCount, &errMsg);
+
+        if (rc != SQLITE_OK) {
+            Logger::error("Failed to count rows in " + table + ": " + std::string(errMsg));
+            sqlite3_free(errMsg);
+            continue;
+        }
+
+        int numPages = static_cast<int>(std::ceil(
+            static_cast<double>(rowCount) / pageSize));
+        if (numPages == 0) numPages = 1; // At least 1 page per table
+
+        tablePageOffsets_[table] = nextPageId;
+
+        Logger::info("  Table '" + table + "': " + std::to_string(rowCount)
+            + " rows → pages [" + std::to_string(nextPageId)
+            + " .. " + std::to_string(nextPageId + numPages - 1) + "]");
+
+        nextPageId += numPages;
+    }
+
+    Logger::info("Page offset registry initialized. Total pages across all tables: "
+        + std::to_string(nextPageId));
+}
+
+int SQLiteManager::getBasePageId(const std::string& tableName) const {
+    // Case-insensitive lookup
+    std::string lower = tableName;
+    std::transform(lower.begin(), lower.end(), lower.begin(),
+        [](unsigned char c) { return std::tolower(c); });
+
+    for (const auto& pair : tablePageOffsets_) {
+        std::string key = pair.first;
+        std::transform(key.begin(), key.end(), key.begin(),
+            [](unsigned char c) { return std::tolower(c); });
+        if (key == lower) {
+            return pair.second;
+        }
+    }
+
+    Logger::warn("Unknown table '" + tableName + "', using base page 0.");
+    return 0;
+}
+
+std::string SQLiteManager::extractTableName(const std::string& sql) {
+    // Convert to lowercase for keyword matching
+    std::string lower = sql;
+    std::transform(lower.begin(), lower.end(), lower.begin(),
+        [](unsigned char c) { return std::tolower(c); });
+
+    // Find "from" keyword
+    std::string::size_type pos = lower.find("from");
+    if (pos == std::string::npos) {
+        return "";
+    }
+
+    // Skip past "from" + whitespace
+    pos += 4; // length of "from"
+    while (pos < lower.size() && std::isspace(lower[pos])) {
+        ++pos;
+    }
+
+    // Extract the table name (next word, stops at space, comma, semicolon, etc.)
+    std::string::size_type start = pos;
+    while (pos < lower.size() && !std::isspace(lower[pos])
+           && lower[pos] != ',' && lower[pos] != ';'
+           && lower[pos] != ')' && lower[pos] != '(') {
+        ++pos;
+    }
+
+    // Return the original-case version of the table name
+    return sql.substr(start, pos - start);
+}
+
+const std::unordered_map<std::string, int>& SQLiteManager::getPageOffsets() const {
+    return tablePageOffsets_;
 }
