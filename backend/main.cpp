@@ -74,8 +74,9 @@ int main() {
 
     Logger::info("All buffer managers initialized. Watching for queries...\n");
 
-    // Flag to truncate display.txt on first query (overwrite previous run's output)
-    bool isFirstWrite = true;
+    // Clear display.txt and query.sql from any previous run
+    { std::ofstream(Config::DISPLAY_FILE, std::ios::trunc); }
+    { std::ofstream(Config::QUERY_FILE, std::ios::trunc); }
 
     // ── Main loop ────────────────────────────────────────────────
     while (g_running) {
@@ -104,9 +105,8 @@ int main() {
                 continue;
             }
 
-            // Write query results to display.txt (once, not per strategy)
-            Helpers::appendQueryResultToFile(sql, result, Config::DISPLAY_FILE, isFirstWrite);
-            isFirstWrite = false;
+            // Write query results to display.txt (always overwrite with latest query)
+            Helpers::appendQueryResultToFile(sql, result, Config::DISPLAY_FILE, true);
             Logger::info("Query results written to " + Config::DISPLAY_FILE);
 
             // Determine which table this query accesses for page offset
