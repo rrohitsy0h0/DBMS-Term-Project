@@ -4,7 +4,7 @@ import time
 
 # Define the file paths for communication
 PROMPT_FILE = "user_prompt.txt"
-DISPLAY_FILE = "display.txt"
+DISPLAY_FILE = "../backend/output/display.txt"
 
 # Configure the UI
 st.set_page_config(page_title="NL Query Interface", page_icon="🗄️", layout="centered")
