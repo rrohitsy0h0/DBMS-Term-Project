@@ -1,0 +1,48 @@
+========================================
+  BUFFER MANAGER METRICS REPORT
+  Generated on: 2026-04-13 21:03:18
+========================================
+
+Strategy: LRU
+  Total Requests : 7
+  Buffer Hits    : 2
+  Buffer Misses  : 5
+  Disk Reads     : 5
+  Hit Ratio      : 0.2857
+  Miss Ratio     : 0.7143
+  Evictions      : 0
+
+----------------------------------------
+
+Strategy: MRU
+  Total Requests : 7
+  Buffer Hits    : 2
+  Buffer Misses  : 5
+  Disk Reads     : 5
+  Hit Ratio      : 0.2857
+  Miss Ratio     : 0.7143
+  Evictions      : 0
+
+----------------------------------------
+
+Strategy: CLOCK
+  Total Requests : 7
+  Buffer Hits    : 2
+  Buffer Misses  : 5
+  Disk Reads     : 5
+  Hit Ratio      : 0.2857
+  Miss Ratio     : 0.7143
+  Evictions      : 0
+
+----------------------------------------
+
+Strategy: PINNED
+  Total Requests : 7
+  Buffer Hits    : 2
+  Buffer Misses  : 5
+  Disk Reads     : 5
+  Hit Ratio      : 0.2857
+  Miss Ratio     : 0.7143
+  Evictions      : 0
+
+========================================
