@@ -1,1 +1,2 @@
 # *.sh linguist-vendored
+backend/lib/** linguist-vendored
