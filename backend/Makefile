@@ -51,4 +51,4 @@ run: all
 
 clean:
 	rm -f $(OBJS) $(SQLITE_OBJ) $(TARGET)
-	rm -f output/metrics.txt
+	rm -f output/*
