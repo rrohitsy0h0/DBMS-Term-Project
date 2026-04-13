@@ -18,8 +18,10 @@ def get_sql_from_ollama(english_query, model="llama3"):
     # (Optional but recommended) Add schema here for better accuracy
     schema = """
     Tables:
-    students(id, name, age, dept)
-    courses(id, course_name)
+    students(id, name, roll_no, department, semester, cgpa, email, phone)
+    courses(id, code, title, department, credits, instructor, semester, max_seats)
+    enrollments(id, student_id, course_id, grade, year, marks, attendance_pct)
+    library_books(id, isbn, title, author, genre, published_year, available_copies, total_copies)
     """
 
     prompt = (
