@@ -41,7 +41,7 @@ if prompt := st.chat_input("Ask a question about the database..."):
         # Note: If your LLM/C++ backend takes time to write to display.txt,
         # you might need a loop here that checks the file's modified timestamp. 
         # For now, we'll use a short sleep to allow the backend a moment to process.
-        time.sleep(2) 
+        time.sleep(10) 
         
         # 3. Read the output from the backend via display.txt
         response_text = "No response generated."

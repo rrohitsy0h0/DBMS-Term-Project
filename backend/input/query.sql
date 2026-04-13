@@ -1,1 +1,3 @@
-SELECT * FROM library_books WHERE genre='AI/ML';
+SELECT c.title 
+FROM courses c 
+WHERE c.department = 'Computer Science';

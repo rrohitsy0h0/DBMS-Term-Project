@@ -1,1 +1,2 @@
-uigb
+select name of all courses in department Computer Science
+
