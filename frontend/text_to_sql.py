@@ -71,7 +71,7 @@ def main():
         print("No query found in user_prompt.txt")
         sys.exit(1)
 
-    output_file = "query.sql"
+    output_file = "../backend/input/query.sql"
 
     print(f"Sending request to Ollama for: '{english_query}'...\n")
 
