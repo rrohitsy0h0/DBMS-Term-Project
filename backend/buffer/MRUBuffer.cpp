@@ -1,43 +1,37 @@
 #include "MRUBuffer.hpp"
 
 MRUBuffer::MRUBuffer(int capacity) : capacity_(capacity) {
-    metrics_.strategyName = "MRU";
+  metrics_.strategyName = "MRU";
 }
 
 void MRUBuffer::accessPage(int pageId) {
-    metrics_.totalRequests++;
+  metrics_.totalRequests++;
 
-    auto it = pageMap_.find(pageId);
+  auto it = pageMap_.find(pageId);
 
-    if (it != pageMap_.end()) {
-        // HIT: page already in buffer — move to front (most recently used)
-        metrics_.bufferHits++;
-        useOrder_.erase(it->second);
-        useOrder_.push_front(pageId);
-        pageMap_[pageId] = useOrder_.begin();
-    } else {
-        // MISS: page not in buffer
-        metrics_.bufferMisses++;
-        metrics_.diskReads++;
+  if (it != pageMap_.end()) {
 
-        // If buffer is full, evict the most recently used page (front of list)
-        if (static_cast<int>(pageMap_.size()) >= capacity_) {
-            int evictId = useOrder_.front();
-            useOrder_.pop_front();
-            pageMap_.erase(evictId);
-            metrics_.evictions++;
-        }
+    metrics_.bufferHits++;
+    useOrder_.erase(it->second);
+    useOrder_.push_front(pageId);
+    pageMap_[pageId] = useOrder_.begin();
+  } else {
 
-        // Insert new page at front
-        useOrder_.push_front(pageId);
-        pageMap_[pageId] = useOrder_.begin();
+    metrics_.bufferMisses++;
+    metrics_.diskReads++;
+
+    if (static_cast<int>(pageMap_.size()) >= capacity_) {
+      int evictId = useOrder_.front();
+      useOrder_.pop_front();
+      pageMap_.erase(evictId);
+      metrics_.evictions++;
     }
+
+    useOrder_.push_front(pageId);
+    pageMap_[pageId] = useOrder_.begin();
+  }
 }
 
-Metrics MRUBuffer::getMetrics() const {
-    return metrics_;
-}
+Metrics MRUBuffer::getMetrics() const { return metrics_; }
 
-std::string MRUBuffer::getName() const {
-    return "MRU";
-}
+std::string MRUBuffer::getName() const { return "MRU"; }

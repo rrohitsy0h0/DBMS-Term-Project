@@ -15,7 +15,6 @@ def read_user_prompt(file_path="user_prompt.txt"):
 def get_sql_from_ollama(english_query, model="llama3"):
     url = "http://localhost:11434/api/generate"
     
-    # (Optional but recommended) Add schema here for better accuracy
     schema = """
     Tables:
     students(id, name, roll_no, department, semester, cgpa, email, phone)
@@ -80,7 +79,6 @@ def main():
     if sql_query:
         sql_query = clean_sql(sql_query)
 
-        # Save SQL
         with open(output_file, "w") as f:
             f.write(sql_query + "\n")
 
