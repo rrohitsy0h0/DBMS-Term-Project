@@ -1,4 +1,4 @@
-# Authors
+# Team name : i_am_groot
 - Kaustav Mishra (23CS10030)
 - Rohit Ranjeet Satpute (23CS10060)
 - Tanishq Sura (23CS10071)
