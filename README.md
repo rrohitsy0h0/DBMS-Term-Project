@@ -5,10 +5,6 @@
 - Aditya Prakash (23CS10088)
 - Tanmay Nitin Amritkar (23CS30066)
 
-# Simulation and Analysis of Buffer Manager Strategies with a Natural Language Query Interface
-
-Term Project, Database Management Systems, IIT Kharagpur (Spring 2025-26)
-
 ## Project Overview
 
 This project simulates and compares multiple buffer replacement strategies under SQL workloads.
@@ -163,3 +159,7 @@ You can modify these constants and rebuild to run new experiments.
 4. Compare strategies from `backend/output/metrics.txt`.
 
 This gives a reproducible baseline for discussing policy behavior and workload sensitivity.
+
+## Simulation and Analysis of Buffer Manager Strategies with a Natural Language Query Interface
+
+Term Project, Database Management Systems, IIT Kharagpur (Spring 2025-26)
