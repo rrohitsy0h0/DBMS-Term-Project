@@ -160,6 +160,11 @@ You can modify these constants and rebuild to run new experiments.
 
 This gives a reproducible baseline for discussing policy behavior and workload sensitivity.
 
-## Simulation and Analysis of Buffer Manager Strategies with a Natural Language Query Interface
+<!-- ## Simulation and Analysis of Buffer Manager Strategies with a Natural Language Query Interface -->
 
-Term Project, Database Management Systems, IIT Kharagpur (Spring 2025-26)
+
+
+## 
+
+
+# Term Project, Database Management Systems, IIT Kharagpur (Spring 2025-26)
